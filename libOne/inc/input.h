@@ -9,8 +9,9 @@ enum INPUT_CODE {
     KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, 
     KEY_Z,
     KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN,
-    KEY_SPACE, KEY_ENTER,
+    KEY_SPACE, KEY_ENTER, KEY_ESCAPE, KEY_SHIFT,
     MOUSE_LBUTTON,
+    MOUSE_MBUTTON,
     MOUSE_RBUTTON,
     JOY1_BUTTON1,  JOY1_BUTTON2,  JOY1_BUTTON3,  JOY1_BUTTON4,
     JOY1_BUTTON5,  JOY1_BUTTON6,  JOY1_BUTTON7,  JOY1_BUTTON8,
@@ -27,7 +28,7 @@ void getInput();
 void getInputState();
 void getJoy();
 void getJoyXbox();
-int inValue( INPUT_CODE inCode );
+int inValue( enum INPUT_CODE inCode );
 int isPress( INPUT_CODE inCode );
 int isTrigger( INPUT_CODE inCode );
 

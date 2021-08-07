@@ -13,6 +13,12 @@ public:
     void operator-= ( const VECTOR2& v );
     void operator*= ( float f );
     void operator/= ( float f );
+    float mag();
+    float sqMag();
+    VECTOR2 normalize();
+    void setMag(float mag);
+    void limmit(float limmit);
+    float heading();
 };
 
 //VECTOR2‚ğg—p‚µ‚½ˆê”ÊŠÖ”

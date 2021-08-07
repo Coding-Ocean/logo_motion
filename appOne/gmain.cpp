@@ -1,93 +1,103 @@
 #include"libOne.h"
 class VEHICLE {
-public:
-    VEHICLE(float x, float y, float hue) {
-        Target.x = x;
-        Target.y = y;
-        Pos.x = random(width);
-        Pos.y = random(height);
-        float deg = random(360.0f);
-        angleMode(DEGREES);
-        Vel.x = cos(deg) * 20;
-        Vel.y = sin(deg) * 20;
-        Radius = 9;
-        MaxSpeed = 10;
-        MaxForce = 0.5f;
-        FleeForce = 10;
-        Hue = hue;
-    }
-    void arrive(VECTOR2 target) {
-        //Targetに向かう、望まれるベクトル
-        VECTOR2 desired = target - Pos;
-        float distance = length(desired);
-        //近づいたらスピードを遅くする
-        float speed = MaxSpeed;
-        if (distance < 100) {
-            speed = map(distance, 0, 100, 0, MaxSpeed);
-        }
-        if (speed > 0) {
-            //desireの大きさをspeedにする
-            desired *= (speed / distance);
-            //加速度ベクトルを求める
-            Acc = desired - Vel;
-            distance = length(Acc);
-            if (distance > MaxForce) {
-                //Accの大きさをMaxForceにする
-                Acc *= (MaxForce / distance);
-            }
-        }
-    }
-    void flee(VECTOR2 target) {
-        //targetから逃げるベクトル
-        VECTOR2 desired = Pos - target;
-        float distance = length(desired);
-        if (distance < 80) {
-            desired *= (MaxSpeed / distance);
-            //加速度ベクトルを求める
-            Acc = desired - Vel;
-            distance = length(Acc);
-            Acc *= (FleeForce / distance);
-        }
-    }
-
-    void update() {
-        if (isPress(KEY_S)) {
-            arrive(VECTOR2(width/2,height+10));
-        }
-        else if (isPress(KEY_A)) {
-            arrive(VECTOR2(-5, height / 2));
-        }
-        else {
-            arrive(Target);
-            flee(VECTOR2(mouseX, mouseY));
-        }
-        Pos += Vel;
-        Vel += Acc;
-        Acc *= 0;
-    }
-    void show() {
-        colorMode(HSV);
-        stroke(Hue,255,255);
-        strokeWeight(Radius);
-        point(Pos.x, Pos.y);
-    }
-
     VECTOR2 Target;
     VECTOR2 Pos;
     VECTOR2 Vel;
     VECTOR2 Acc;
     float Radius;
     float MaxSpeed;
-    float MaxForce;
-    float FleeForce;
+    float ArriveMaxForce;
+    float FleeMaxForce;
     float Hue;
+public:
+    VEHICLE(float x, float y, float hue) {
+        //点の大きさと色相
+        Radius = 9;
+        Hue = hue;
+        //目標位置
+        Target.x = x;
+        Target.y = y;
+        //初期位置
+        Pos.x = -Radius;
+        Pos.y = height / 2;
+        //最高速度
+        MaxSpeed = 10;
+        //ハンドルを切る最高の力
+        ArriveMaxForce = 0.5f;
+        FleeMaxForce = 10;
+    }
+    void resetRandomPosVel() {
+        //初期位置
+        Pos.x = random(width);
+        Pos.y = random(height);
+        //初速度ベクトル
+        float deg = random(360.0f);
+        angleMode(DEGREES);
+        Vel.x = cos(deg) * 15;
+        Vel.y = sin(deg) * 15;
+    }
+    void arrive(const VECTOR2& target) {
+        //Targetに向かう、望まれるベクトル
+        VECTOR2 desired = target - Pos;
+        //近づいたらスピードを遅くする
+        float speed = MaxSpeed;
+        float distance = desired.mag();
+        if (distance < 100) {
+            speed = map(distance, 0, 100, 0, MaxSpeed);
+        }
+        //desireの大きさをspeedにする
+        desired.setMag(speed);
+        //ハンドルを切るベクトルを求める
+        VECTOR2 steer = desired - Vel;
+        //Accの大きさをArriveMaxForce以下に制限する
+        steer.limmit(ArriveMaxForce);
+        Acc += steer;
+
+    }
+    void flee(const VECTOR2& target) {
+        //targetから逃げるベクトル
+        VECTOR2 desired = Pos - target;
+        float distance = desired.mag();
+        if (distance < 80) {
+            desired.setMag(MaxSpeed);
+            //加速度ベクトルを求める
+            VECTOR2 steer = desired - Vel;
+            steer.limmit(FleeMaxForce);
+            Acc += steer;
+        }
+    }
+    void update() {
+        if (isTrigger(KEY_SPACE)) {
+            resetRandomPosVel();
+        }
+        else if (isPress(KEY_S)) {
+            arrive(VECTOR2(width/2,height+Radius));
+        }
+        else if (isPress(KEY_A)) {
+            arrive(VECTOR2(-Radius, height / 2));
+        }
+        else {
+            arrive(Target);
+            //マウスカーソルから逃げる
+            flee(VECTOR2(mouseX, mouseY));
+        }
+        Vel += Acc;
+        Pos += Vel;
+        Acc *= 0;
+    }
+    void draw() {
+        colorMode(HSV);
+        angleMode(DEGREES);
+        stroke(Hue,255,255);
+        strokeWeight(Radius);
+        point(Pos.x, Pos.y);
+    }
 };
 
-
 #include<vector>
-void gmain() {
-    window(1920, 1080, full);
-    std::vector<VEHICLE> vehicle;
+void create(std::vector<VEHICLE>& vehicles) {
+    //１点、１点、ターゲットの位置（x,y）と色相(hue)を
+    //ファイルデータから読み込んで設定する
     FILE* fp;
     fopen_s(&fp, "coding_ocean.csv", "r");
     float ofsX = (width - 1450) / 2;
@@ -95,67 +105,21 @@ void gmain() {
     float x, y;
     while (fscanf_s(fp, "%f,%f", &x, &y) != EOF) {
         float hue = map(y, 0, 160, 150, 210);
-        vehicle.push_back(VEHICLE(ofsX + x, ofsY + y, hue));
+        vehicles.push_back(VEHICLE(x + ofsX, y + ofsY, hue));
     }
     fclose(fp);
-    int num = (int)vehicle.size();
+}
+void gmain() {
+    window(1920, 1080, full);
+    hideCursor();
+    std::vector<VEHICLE> vehicles;
+    create(vehicles);
     while (notQuit){
         clear(1);
-        for (int i = 0; i < num; i++) {
-            vehicle[i].update();
-            vehicle[i].show();
+        point(mouseX, mouseY);
+        for (auto& vehicle : vehicles) {
+            vehicle.update();
+            vehicle.draw();
         }
     }
 }
-
-
-/*
-Vehicle.prototype.behaviors = function() {
-    arrive = this.arrive(this.target);
-    this.applyForce(arrive);
-
-    mouse = createVector(mouseX, mouseY);
-    flee = this.flee(mouse);
-    this.applyForce(flee);
-}
-Vehicle.prototype.arrive = function(target) {
-    desired = p5.Vector.sub(target, this.pos);
-    d = desired.mag();
-    speed = this.maxspeed;
-    if (d < 100) {
-        speed = map(d, 0, 100, 0, this.maxspeed);
-    }
-    desired.setMag(speed);
-    steer = p5.Vector.sub(desired, this.vel);
-    steer.limit(this.maxforce);
-    return steer;
-}
-Vehicle.prototype.flee = function(target) {
-    desired = p5.Vector.sub(target, this.pos);
-    d = desired.mag();
-    //steer.mult(0);
-    if (d < 80) {
-        desired.setMag(this.maxspeed);
-        desired.mult(-1);
-        steer = p5.Vector.sub(desired, this.vel);
-        steer.limit(this.maxforce);
-        steer.mult(10);
-    }
-    return steer;
-}
-Vehicle.prototype.applyForce = function(f) {
-    this.acc.add(f);
-}
-
-Vehicle.prototype.update = function() {
-    this.pos.add(this.vel);
-    this.vel.add(this.acc);
-    this.acc.mult(0);
-}
-
-Vehicle.prototype.show = function() {
-    stroke(255);
-    strokeWeight(this.r);
-    point(this.pos.x, this.pos.y);
-}
-*/
