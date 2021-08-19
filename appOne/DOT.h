@@ -73,7 +73,7 @@ public:
     }
     void update() {
         setMaxSpeed(20);
-        setMaxForce(1.f);
+        setMaxForce(3);
         setNearDistance(100);
         if (isPress(KEY_SPACE)) {
             Elapsed += delta;
@@ -96,7 +96,8 @@ public:
         }
         else {
             chase(Target);
-            setMaxForce(10);
+            setMaxSpeed(40);
+            setMaxForce(40);
             runAway(VECTOR2(mouseX, mouseY));
             Elapsed = 0.1f;
         }

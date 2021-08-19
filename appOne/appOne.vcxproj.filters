@@ -12,9 +12,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="coding_ocean.csv" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="gmain.cpp" />
   </ItemGroup>
   <ItemGroup>

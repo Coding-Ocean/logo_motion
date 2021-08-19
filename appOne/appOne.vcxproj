@@ -157,9 +157,6 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="coding_ocean.csv" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="DOT.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
