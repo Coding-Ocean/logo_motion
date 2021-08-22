@@ -19,6 +19,8 @@ public:
     void setMag(float mag);
     void limmit(float limmit);
     float heading();
+    float dot(const VECTOR2& v)const;
+    float cross(const VECTOR2& v)const;
 };
 
 //VECTOR2‚ğg—p‚µ‚½ˆê”ÊŠÖ”
